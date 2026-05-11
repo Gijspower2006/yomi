@@ -38,13 +38,13 @@
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
     "react-native-svg": "15.12.1",
-    "react-native-web": "^0.21.0"
+    "react-native-web": "^0.21.0",
+    "electron-serve": "^3.0.1"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
     "electron": "^42.0.1",
     "electron-builder": "^26.8.1",
-    "electron-serve": "^3.0.1",
     "typescript": "~5.9.2"
   },
   "private": true
