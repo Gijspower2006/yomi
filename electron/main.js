@@ -1,9 +1,24 @@
-const { app, BrowserWindow, shell, protocol, net } = require('electron');
+const { app, BrowserWindow, shell, protocol } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
 const DIST = path.join(__dirname, '../dist');
 
-// Must be called before app is ready
+const MIME = {
+  '.html': 'text/html',
+  '.js':   'application/javascript',
+  '.css':  'text/css',
+  '.json': 'application/json',
+  '.png':  'image/png',
+  '.ico':  'image/x-icon',
+  '.ttf':  'font/ttf',
+  '.otf':  'font/otf',
+  '.woff': 'font/woff',
+  '.woff2':'font/woff2',
+  '.svg':  'image/svg+xml',
+  '.mp3':  'audio/mpeg',
+};
+
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true } },
 ]);
@@ -23,6 +38,7 @@ function createWindow() {
   });
 
   win.loadURL('app://localhost/');
+  win.webContents.openDevTools(); // remove after debugging
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
@@ -35,7 +51,15 @@ app.whenReady().then(() => {
     const url = new URL(request.url);
     const pathname = url.pathname === '/' ? '/index.html' : url.pathname;
     const filePath = path.join(DIST, pathname);
-    return net.fetch('file://' + filePath);
+
+    try {
+      const data = fs.readFileSync(filePath);
+      const ext = path.extname(filePath).toLowerCase();
+      const contentType = MIME[ext] || 'application/octet-stream';
+      return new Response(data, { headers: { 'Content-Type': contentType } });
+    } catch {
+      return new Response('Not found: ' + pathname, { status: 404 });
+    }
   });
 
   createWindow();
