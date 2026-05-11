@@ -1,11 +1,12 @@
-const { app, BrowserWindow, shell, protocol } = require('electron');
+const { app, BrowserWindow, shell } = require('electron');
+const http = require('http');
 const path = require('path');
 const fs = require('fs');
 
 const DIST = path.join(__dirname, '../dist');
 
 const MIME = {
-  '.html': 'text/html',
+  '.html': 'text/html; charset=utf-8',
   '.js':   'application/javascript',
   '.css':  'text/css',
   '.json': 'application/json',
@@ -19,12 +20,33 @@ const MIME = {
   '.mp3':  'audio/mpeg',
 };
 
-protocol.registerSchemesAsPrivileged([
-  { scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true } },
-]);
+let mainWindow = null;
 
-function createWindow() {
-  const win = new BrowserWindow({
+function startServer(callback) {
+  const server = http.createServer((req, res) => {
+    // Strip query string
+    const pathname = req.url.split('?')[0];
+    const filePath = path.join(DIST, pathname === '/' ? 'index.html' : pathname);
+
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(404);
+        res.end('Not found');
+        return;
+      }
+      const ext = path.extname(filePath).toLowerCase();
+      res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+      res.end(data);
+    });
+  });
+
+  server.listen(0, '127.0.0.1', () => {
+    callback(server.address().port);
+  });
+}
+
+function createWindow(port) {
+  mainWindow = new BrowserWindow({
     width: 420,
     height: 900,
     minWidth: 360,
@@ -37,34 +59,22 @@ function createWindow() {
     },
   });
 
-  win.loadURL('app://localhost/');
+  mainWindow.loadURL(`http://127.0.0.1:${port}/`);
 
-  win.webContents.setWindowOpenHandler(({ url }) => {
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: 'deny' };
   });
+
+  mainWindow.on('closed', () => { mainWindow = null; });
 }
 
 app.whenReady().then(() => {
-  protocol.handle('app', (request) => {
-    const url = new URL(request.url);
-    const pathname = url.pathname === '/' ? '/index.html' : url.pathname;
-    const filePath = path.join(DIST, pathname);
-
-    try {
-      const data = fs.readFileSync(filePath);
-      const ext = path.extname(filePath).toLowerCase();
-      const contentType = MIME[ext] || 'application/octet-stream';
-      return new Response(data, { headers: { 'Content-Type': contentType } });
-    } catch {
-      return new Response('Not found: ' + pathname, { status: 404 });
-    }
-  });
-
-  createWindow();
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  startServer((port) => {
+    createWindow(port);
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow(port);
+    });
   });
 });
 
