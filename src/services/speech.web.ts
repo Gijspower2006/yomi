@@ -1,4 +1,3 @@
-import * as Speech from 'expo-speech';
 import { speak as aiSpeak } from './ttsService';
 
 const JAPANESE_RE = /[぀-ゟ゠-ヿ一-龯ｦ-ﾟ]/;
@@ -27,14 +26,13 @@ function splitByLanguage(text: string): Segment[] {
 
 function speakSegment(segment: Segment): Promise<void> {
   return new Promise((resolve) => {
-    Speech.speak(segment.text, {
-      language: segment.lang === 'ja' ? 'ja-JP' : 'en-US',
-      pitch: 1.0,
-      rate: segment.lang === 'ja' ? 0.85 : 0.9,
-      onDone: resolve,
-      onError: () => resolve(),
-      onStopped: () => resolve(),
-    });
+    if (!('speechSynthesis' in window)) { resolve(); return; }
+    const utt = new SpeechSynthesisUtterance(segment.text);
+    utt.lang  = segment.lang === 'ja' ? 'ja-JP' : 'en-US';
+    utt.rate  = segment.lang === 'ja' ? 0.85 : 0.9;
+    utt.onend = () => resolve();
+    utt.onerror = () => resolve();
+    window.speechSynthesis.speak(utt);
   });
 }
 
@@ -53,9 +51,9 @@ export async function speakJapanese(text: string): Promise<void> {
 }
 
 export function stopSpeaking(): void {
-  Speech.stop();
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 }
 
 export function isSpeaking(): Promise<boolean> {
-  return Speech.isSpeakingAsync();
+  return Promise.resolve('speechSynthesis' in window && window.speechSynthesis.speaking);
 }
