@@ -38,7 +38,6 @@ function createWindow() {
   });
 
   win.loadURL('app://localhost/');
-  win.webContents.openDevTools(); // remove after debugging
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
