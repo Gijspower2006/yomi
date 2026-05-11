@@ -2,7 +2,6 @@
   "appId": "com.yomi.japanese",
   "productName": "Yomi",
   "copyright": "Copyright © 2025",
-  "main": "electron/main.js",
   "directories": {
     "output": "electron-dist",
     "buildResources": "assets"

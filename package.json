@@ -1,7 +1,9 @@
 {
-  "name": "language-tutor",
+  "name": "yomi",
   "version": "1.0.0",
-  "main": "index.ts",
+  "description": "Japanese language learning app",
+  "author": "Gijs van den Bos",
+  "main": "electron/main.js",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
