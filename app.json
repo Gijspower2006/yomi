@@ -3,6 +3,7 @@
     "name": "language-tutor",
     "slug": "language-tutor",
     "version": "1.0.0",
+    "scheme": "yomi",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -25,6 +26,10 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-font",
+      "expo-localization"
+    ]
   }
 }
